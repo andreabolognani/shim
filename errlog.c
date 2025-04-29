@@ -35,8 +35,9 @@ VLogError(const char *file, int line, const char *func, const CHAR16 *fmt,
 	if (file == NULL || func == NULL || fmt == NULL)
 		return EFI_INVALID_PARAMETER;
 
-	newerrs = ReallocatePool(errs, (nerrs + 1) * sizeof(*errs),
-				       (nerrs + 3) * sizeof(*errs));
+	newerrs = ReallocatePool((nerrs + 1) * sizeof(*errs),
+					(nerrs + 3) * sizeof(*errs),
+					errs);
 	if (!newerrs)
 		return EFI_OUT_OF_RESOURCES;
 
