@@ -130,59 +130,6 @@ out:
 	return status;
 }
 
-
-static EFI_STATUS
-try_load_from_lf2(EFI_DEVICE_PATH *dp, buffer_properties_t *bprop)
-{
-	EFI_STATUS status = EFI_SUCCESS;
-	EFI_LOAD_FILE2_PROTOCOL *lf2 = NULL;
-
-	bprop->buffer = NULL;
-
-	/* look for a handle with LF2 support from the input DP */
-	bprop->dp = dp;
-	status = BS->LocateDevicePath(&gEfiLoadFile2ProtocolGuid, &bprop->dp, &bprop->hnd);
-	if (EFI_ERROR(status))
-		goto out;
-
-	/* find protocol */
-	status = BS->HandleProtocol(bprop->hnd, &gEfiLoadFile2ProtocolGuid, (void **) &lf2);
-	if (EFI_ERROR(status))
-		goto out;
-
-	/* get file size */
-	bprop->size = 0; /* this shouldn't be read when Buffer=NULL but better be safe */
-	status = lf2->LoadFile(lf2, bprop->dp, /*BootPolicy=*/false, &bprop->size, NULL);
-	/*
-	 * NOTE: the spec is somewhat ambiguous what is the correct return
-	 * status code when asking for the buffer size with Buffer=NULL. I am
-	 * assuming EFI_SUCCESS and EFI_BUFFER_TOO_SMALL are the only
-	 * reasonable interpretations.
-	 */
-	if (EFI_ERROR(status) && status != EFI_BUFFER_TOO_SMALL) {
-		status = EFI_LOAD_ERROR;
-		goto out;
-	}
-
-	/* allocate buffer */
-	bprop->buffer = AllocatePool(bprop->size);
-	if (!bprop->buffer) {
-		status = EFI_OUT_OF_RESOURCES;
-		goto out;
-	}
-	bprop->allocated_buffer = true;
-
-	/* read file */
-	status = lf2->LoadFile(lf2, bprop->dp, /*BootPolicy=*/false, &bprop->size, bprop->buffer);
-	if (EFI_ERROR(status))
-		goto out;
-
-out:
-	if (EFI_ERROR(status) && bprop->buffer)
-		FreePool(bprop->buffer);
-	return status;
-}
-
 static void
 free_pages_alloc_image(SHIM_LOADED_IMAGE *image)
 {
@@ -246,8 +193,6 @@ shim_load_image(BOOLEAN BootPolicy, EFI_HANDLE ParentImageHandle,
 
 			if (try_load_from_sfs(DevicePath, &bprop) == EFI_SUCCESS)
 				;
-			else if (try_load_from_lf2(DevicePath, &bprop) == EFI_SUCCESS)
-				;
 			else
 				/* no buffer given and we cannot load from this device */
 				return EFI_LOAD_ERROR;
@@ -307,8 +252,6 @@ shim_load_image(BOOLEAN BootPolicy, EFI_HANDLE ParentImageHandle,
 	efi_status = BS->InstallMultipleProtocolInterfaces(ImageHandle,
 					&SHIM_LOADED_IMAGE_GUID, image,
 					&EFI_LOADED_IMAGE_GUID, &image->li,
-					&gEfiLoadedImageDevicePathProtocolGuid,
-					image->loaded_image_device_path,
 					NULL);
 	if (EFI_ERROR(efi_status))
 		goto free_image;
@@ -331,8 +274,6 @@ free_alloc:
 	BS->UninstallMultipleProtocolInterfaces(ImageHandle,
 	                                &SHIM_LOADED_IMAGE_GUID, image,
 	                                &EFI_LOADED_IMAGE_GUID, &image->li,
-	                                &gEfiLoadedImageDevicePathProtocolGuid,
-					image->loaded_image_device_path,
 					NULL);
 	*ImageHandle = NULL;
 	free_pages_alloc_image(image);
@@ -389,8 +330,6 @@ shim_start_image(IN EFI_HANDLE ImageHandle, OUT UINTN *ExitDataSize,
 	BS->UninstallMultipleProtocolInterfaces(ImageHandle,
 	                                &SHIM_LOADED_IMAGE_GUID, image,
 	                                &EFI_LOADED_IMAGE_GUID, &image->li,
-	                                &gEfiLoadedImageDevicePathProtocolGuid,
-					image->loaded_image_device_path,
 					NULL);
 
 	free_pages_alloc_image(image);
