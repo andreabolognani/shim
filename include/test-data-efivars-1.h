@@ -111,9 +111,6 @@ static const unsigned char test_data_efivars_1_HSIStatus[] =
 	"stack-is-executable: 0\n"
 	"ro-sections-are-writable: 0\n"
 	"has-memory-attribute-protocol: 0\n"
-	"has-dxe-services-table: 0\n"
-	"has-get-memory-space-descriptor: 0\n"
-	"has-set-memory-space-attributes: 0\n"
 	"shim-has-nx-compat-set: 0\n"
 	;
 
