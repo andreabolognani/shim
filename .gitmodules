@@ -1,4 +1,4 @@
 [submodule "gnu-efi"]
 	path = gnu-efi
-	url = https://github.com/gmbr3/gnu-efi.git
-	branch = shim-test
+	url = https://github.com/ncroxon/gnu-efi.git
+	branch = master
