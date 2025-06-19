@@ -149,7 +149,7 @@ log_debug_print(const CHAR16 *fmt, ...)
 		new_alloc_sz += buf_sz;
 		new_alloc_sz = ALIGN_UP(new_alloc_sz, EFI_PAGE_SIZE);
 
-		new_debug_log = ReallocatePool(debug_log, debug_log_alloc, new_alloc_sz);
+		new_debug_log = ReallocatePool(debug_log_alloc, new_alloc_sz, debug_log);
 		if (!new_debug_log)
 			return 0;
 		debug_log = (UINT8 *)new_debug_log;
