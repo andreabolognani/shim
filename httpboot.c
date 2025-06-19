@@ -620,8 +620,8 @@ receive_http_response(EFI_HTTP_PROTOCOL *http, VOID **buffer, UINT64 *buf_size)
 				"Content-Length")) {
 			*buf_size = ascii_to_int(rx_message.Headers[i].FieldValue);
 			for(j = 0; j < i; j++) {
-				if (!strcasecmp(rx_message.Headers[i].FieldName,
-						(CHAR8 *)"Content-Length")) {
+				if (!strcasecmp((char *)rx_message.Headers[i].FieldName,
+						"Content-Length")) {
 					if (*buf_size != ascii_to_int(rx_message.Headers[j].FieldValue)) {
 						perror(L"Content-Length is invalid\n");
 						goto error;
